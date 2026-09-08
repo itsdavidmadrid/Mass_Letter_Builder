@@ -156,10 +156,47 @@
         .modal-content { background: var(--modal-bg); color: var(--text); padding: 30px; border-radius: 6px; text-align: center; max-width: 400px; box-shadow: var(--shadow); }
         .modal-content p { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; }
 
+        .saved-templates-launch { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; flex: none; margin: 0 0 10px; padding: 0 0 10px; background: transparent; color: var(--heading); border: none; border-bottom: 2px solid var(--heading-border); border-radius: 0; font-size: 1.4rem; font-weight: 600; text-align: left; cursor: pointer; }
+        .saved-templates-launch:hover { color: #0066cc; background: transparent; }
+        .saved-templates-count { font-size: 0.8rem; font-weight: 600; color: var(--hint); white-space: nowrap; }
+
+        .keep-modal { padding: 24px; }
+        .keep-board { width: min(920px, 100%); max-height: 86vh; overflow: auto; background: var(--bg); color: var(--text); border-radius: 12px; box-shadow: var(--shadow); padding: 20px 22px 24px; text-align: left; }
+        .keep-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+        .keep-header h3 { margin: 0; font-size: 1.2rem; color: var(--heading); }
+        .keep-close { flex: none; width: auto; padding: 8px 12px; font-size: 0.85rem; }
+        .keep-composer { display: flex; gap: 8px; align-items: center; margin-bottom: 18px; padding: 12px; background: var(--panel); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+        .keep-composer input { flex: 1; margin: 0; }
+        .keep-status { margin: 0 0 14px; font-size: 0.8rem; font-weight: 600; min-height: 1.1em; }
+        .keep-status.error { color: var(--danger); }
+        .keep-status.success { color: var(--success); }
+        .keep-empty { margin: 24px 0; text-align: center; color: var(--hint); font-size: 0.95rem; }
+        .keep-grid { column-count: 3; column-gap: 12px; }
+        .keep-grid.is-empty { column-count: 1; }
+        .keep-card { display: block; width: 100%; break-inside: avoid; margin: 0 0 12px; padding: 16px 16px 14px; border: none; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.18); text-align: left; cursor: pointer; position: relative; flex: none; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .keep-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.18); }
+        .keep-card h4 { margin: 0 28px 8px 0; font-size: 1rem; font-weight: 700; }
+        .keep-card p { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 0.85rem; line-height: 1.45; font-weight: 400; display: -webkit-box; -webkit-line-clamp: 10; -webkit-box-orient: vertical; overflow: hidden; }
+        .keep-card-delete { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; padding: 0; flex: none; border-radius: 50%; background: rgba(0,0,0,0.08); color: inherit; font-size: 1rem; line-height: 1; }
+        .keep-card-delete:hover { background: rgba(217,48,37,0.18); color: #b3261e; }
+        .keep-card[data-tone="0"] { background: #fff9c4; color: #202124; }
+        .keep-card[data-tone="1"] { background: #cbf0f8; color: #202124; }
+        .keep-card[data-tone="2"] { background: #d7aefb; color: #202124; }
+        .keep-card[data-tone="3"] { background: #fdcfe8; color: #202124; }
+        .keep-card[data-tone="4"] { background: #e6c9a8; color: #202124; }
+        .keep-card[data-tone="5"] { background: #ccff90; color: #202124; }
+        [data-theme="dark"] .keep-card[data-tone="0"] { background: #6b5c1f; color: #f8f5e4; }
+        [data-theme="dark"] .keep-card[data-tone="1"] { background: #1f4e5a; color: #e4f6fb; }
+        [data-theme="dark"] .keep-card[data-tone="2"] { background: #4b2d66; color: #f3e8ff; }
+        [data-theme="dark"] .keep-card[data-tone="3"] { background: #6b2d4d; color: #ffe4f1; }
+        [data-theme="dark"] .keep-card[data-tone="4"] { background: #5c4330; color: #f6e6d4; }
+        [data-theme="dark"] .keep-card[data-tone="5"] { background: #35541f; color: #e8f8d4; }
+
         @media (max-width: 860px) {
             .container { grid-template-columns: 1fr; }
-            .hotswap-row { flex-direction: column; align-items: stretch; }
+            .hotswap-row, .keep-composer { flex-direction: column; align-items: stretch; }
             .btn-compact { width: 100%; }
+            .keep-grid { column-count: 1; }
         }
     </style>
 </head>
@@ -180,8 +217,8 @@
             <input type="text" id="companyName" name="companyName" value="" autocomplete="off">
         </div>
         <div class="form-group">
-            <label for="jobTitle">Target Person/group:</label>
-            <input type="text" id="jobTitle" name="jobTitle" value="" autocomplete="off">
+            <label for="groupName">Target Group:</label>
+            <input type="text" id="groupName" name="groupName" value="" autocomplete="off">
         </div>
         <div class="form-group">
             <label for="customParagraph">Custom Mass Paragraph (Placeholder Segment):</label>
@@ -189,7 +226,10 @@
         </div>
         <div id="dynamicVars" class="dynamic-vars" hidden></div>
 
-        <h2>Master Template Architecture</h2>
+        <button type="button" id="savedTemplatesLaunch" class="saved-templates-launch" onclick="openTemplatesPopup()" aria-haspopup="dialog" aria-controls="templatesModal" title="Open saved master templates">
+            <span>Master Template Architecture</span>
+            <span id="templateCountLabel" class="saved-templates-count">0 saved</span>
+        </button>
         <div class="form-group">
             <div id="tokenHub" class="token-hub" aria-label="Token shortcuts"></div>
             <label for="masterTemplate">Editable Structure:</label>
@@ -229,6 +269,21 @@
     </div>
 </div>
 
+<div id="templatesModal" class="modal keep-modal" role="dialog" aria-modal="true" aria-labelledby="templatesModalTitle" onclick="handleTemplatesBackdrop(event)">
+    <div class="keep-board" onclick="event.stopPropagation()">
+        <div class="keep-header">
+            <h3 id="templatesModalTitle">Master Template Architecture</h3>
+            <button type="button" class="btn-secondary keep-close" onclick="closeTemplatesPopup()">Close</button>
+        </div>
+        <form class="keep-composer" onsubmit="return saveCurrentTemplate(event)">
+            <input type="text" id="templateTitleInput" name="templateTitleInput" value="" autocomplete="off" placeholder="Note title">
+            <button type="submit" class="btn-primary btn-compact">Save current template</button>
+        </form>
+        <p id="templatesStatus" class="keep-status" role="status" aria-live="polite"></p>
+        <div id="templateBoard" class="keep-grid"></div>
+    </div>
+</div>
+
 <div id="workflowModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="workflowModalTitle">
     <div class="modal-content">
         <p id="workflowModalTitle">Document Export Completed Successfully!</p>
@@ -242,22 +297,29 @@
 <script>
     var STORAGE_KEY = 'sdr_hotswap_tokens';
     var THEME_KEY = 'sdr_theme';
-    var BASELINE_TOKENS = ['{COMPANY}', '{TITLE}', '{PLACEHOLDER}'];
+    var TEMPLATES_KEY = 'sdr_body_templates';
+    var BASELINE_TOKENS = ['{COMPANY}', '{GROUP}', '{PLACEHOLDER}'];
     var CORE_FIELD_MAP = {
         '{COMPANY}': 'companyName',
-        '{TITLE}': 'jobTitle',
+        '{GROUP}': 'groupName',
         '{PLACEHOLDER}': 'customParagraph'
     };
 
     var tokens = [];
+    var savedTemplates = [];
     var copyResetTimers = {};
 
     var templateInput = document.getElementById('masterTemplate');
     var companyInput = document.getElementById('companyName');
-    var jobInput = document.getElementById('jobTitle');
+    var groupInput = document.getElementById('groupName');
     var customParaInput = document.getElementById('customParagraph');
     var previewDiv = document.getElementById('letterPreview');
     var modal = document.getElementById('workflowModal');
+    var templatesModal = document.getElementById('templatesModal');
+    var templateBoard = document.getElementById('templateBoard');
+    var templateTitleInput = document.getElementById('templateTitleInput');
+    var templatesStatus = document.getElementById('templatesStatus');
+    var templateCountLabel = document.getElementById('templateCountLabel');
     var tokenHub = document.getElementById('tokenHub');
     var hotswapPanel = document.getElementById('hotswapPanel');
     var newTokenInput = document.getElementById('newTokenInput');
@@ -312,7 +374,7 @@
         }
 
         try {
-            return normalizeTokenList(JSON.parse(raw));
+            return migrateLegacyTitleToken(normalizeTokenList(JSON.parse(raw)));
         } catch (err) {
             return BASELINE_TOKENS.slice();
         }
@@ -320,6 +382,21 @@
 
     function persistTokens() {
         writeStorage(tokens);
+    }
+
+    function migrateLegacyTitleToken(list) {
+        var next = [];
+        for (var i = 0; i < list.length; i++) {
+            var token = list[i] === '{TITLE}' ? '{GROUP}' : list[i];
+            if (token && next.indexOf(token) === -1) {
+                next.push(token);
+            }
+        }
+        return next.length ? next : BASELINE_TOKENS.slice();
+    }
+
+    function migrateTemplateBody(body) {
+        return safeText(body).split('{TITLE}').join('{GROUP}');
     }
 
     function readTheme() {
@@ -597,7 +674,8 @@
     function getTokenValues() {
         var values = {
             '{COMPANY}': companyInput ? companyInput.value : '',
-            '{TITLE}': jobInput ? jobInput.value : '',
+            '{GROUP}': groupInput ? groupInput.value : '',
+            '{TITLE}': groupInput ? groupInput.value : '',
             '{PLACEHOLDER}': customParaInput ? customParaInput.value : ''
         };
 
@@ -709,7 +787,7 @@
 
         if (choice === 'clear') {
             if (companyInput) companyInput.value = '';
-            if (jobInput) jobInput.value = '';
+            if (groupInput) groupInput.value = '';
             if (customParaInput) customParaInput.value = '';
             if (dynamicVars) {
                 var inputs = dynamicVars.querySelectorAll('input[data-token]');
@@ -721,8 +799,188 @@
         }
     }
 
+    function readItem(key) {
+        try {
+            if (!window.localStorage) return null;
+            return localStorage.getItem(key);
+        } catch (err) {
+            return null;
+        }
+    }
+
+    function writeItem(key, value) {
+        try {
+            if (!window.localStorage) return;
+            localStorage.setItem(key, value);
+        } catch (err) {}
+    }
+
+    function loadSavedTemplates() {
+        var raw = readItem(TEMPLATES_KEY);
+        if (raw == null || raw === '') return [];
+
+        try {
+            var parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) return [];
+            var cleaned = [];
+            for (var i = 0; i < parsed.length; i++) {
+                var item = parsed[i] || {};
+                var body = migrateTemplateBody(item.body);
+                if (!body) continue;
+                cleaned.push({
+                    id: item.id || ('tpl_' + Date.now() + '_' + i),
+                    name: safeText(item.name).trim() || 'Untitled template',
+                    body: body
+                });
+            }
+            return cleaned;
+        } catch (err) {
+            return [];
+        }
+    }
+
+    function persistSavedTemplates() {
+        writeItem(TEMPLATES_KEY, JSON.stringify(savedTemplates));
+        updateTemplateCount();
+    }
+
+    function updateTemplateCount() {
+        if (!templateCountLabel) return;
+        var count = savedTemplates.length;
+        templateCountLabel.textContent = count === 1 ? '1 saved' : count + ' saved';
+    }
+
+    function setTemplatesStatus(message, kind) {
+        if (!templatesStatus) return;
+        templatesStatus.textContent = message || '';
+        templatesStatus.className = 'keep-status' + (kind ? ' ' + kind : '');
+    }
+
+    function renderTemplateBoard() {
+        if (!templateBoard) return;
+        templateBoard.innerHTML = '';
+
+        if (!savedTemplates.length) {
+            templateBoard.className = 'keep-grid is-empty';
+            var empty = document.createElement('p');
+            empty.className = 'keep-empty';
+            empty.textContent = 'No saved templates yet. Give this note a title and save the current editable structure.';
+            templateBoard.appendChild(empty);
+            return;
+        }
+
+        templateBoard.className = 'keep-grid';
+
+        for (var i = 0; i < savedTemplates.length; i++) {
+            (function(note, index) {
+                var card = document.createElement('button');
+                card.type = 'button';
+                card.className = 'keep-card';
+                card.setAttribute('data-tone', String(index % 6));
+                card.setAttribute('data-id', note.id);
+                card.title = 'Load this template into Editable Structure';
+                card.onclick = function() { loadSavedTemplate(note.id); };
+
+                var heading = document.createElement('h4');
+                heading.textContent = note.name || 'Untitled template';
+
+                var body = document.createElement('p');
+                body.textContent = note.body || '';
+
+                var remove = document.createElement('button');
+                remove.type = 'button';
+                remove.className = 'keep-card-delete';
+                remove.setAttribute('aria-label', 'Delete ' + (note.name || 'template'));
+                remove.textContent = '\u00D7';
+                remove.onclick = function(event) {
+                    if (event && event.stopPropagation) event.stopPropagation();
+                    deleteSavedTemplate(note.id);
+                };
+
+                card.appendChild(remove);
+                card.appendChild(heading);
+                card.appendChild(body);
+                templateBoard.appendChild(card);
+            })(savedTemplates[i], i);
+        }
+    }
+
+    function openTemplatesPopup() {
+        if (!templatesModal) return;
+        setTemplatesStatus('', '');
+        renderTemplateBoard();
+        templatesModal.classList.add('open');
+        templatesModal.style.display = 'flex';
+        if (templateTitleInput) templateTitleInput.focus();
+    }
+
+    function closeTemplatesPopup() {
+        if (!templatesModal) return;
+        templatesModal.classList.remove('open');
+        templatesModal.style.display = 'none';
+    }
+
+    function handleTemplatesBackdrop(event) {
+        if (event && event.target === templatesModal) {
+            closeTemplatesPopup();
+        }
+    }
+
+    function saveCurrentTemplate(event) {
+        if (event && event.preventDefault) event.preventDefault();
+        var body = templateInput ? templateInput.value : '';
+        if (!safeText(body).trim()) {
+            setTemplatesStatus('Write a template in Editable Structure before saving.', 'error');
+            return false;
+        }
+
+        var name = templateTitleInput ? safeText(templateTitleInput.value).trim() : '';
+        if (!name) name = 'Untitled template';
+
+        savedTemplates.unshift({
+            id: 'tpl_' + Date.now(),
+            name: name,
+            body: migrateTemplateBody(body)
+        });
+        persistSavedTemplates();
+        if (templateTitleInput) templateTitleInput.value = '';
+        renderTemplateBoard();
+        setTemplatesStatus('Template saved.', 'success');
+        return false;
+    }
+
+    function loadSavedTemplate(id) {
+        for (var i = 0; i < savedTemplates.length; i++) {
+            if (savedTemplates[i].id === id) {
+                if (templateInput) templateInput.value = migrateTemplateBody(savedTemplates[i].body);
+                renderLetter();
+                closeTemplatesPopup();
+                return;
+            }
+        }
+    }
+
+    function deleteSavedTemplate(id) {
+        var next = [];
+        for (var i = 0; i < savedTemplates.length; i++) {
+            if (savedTemplates[i].id !== id) next.push(savedTemplates[i]);
+        }
+        savedTemplates = next;
+        persistSavedTemplates();
+        renderTemplateBoard();
+        setTemplatesStatus('Template deleted.', 'success');
+    }
+
+    function bindTemplateShortcuts() {
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && templatesModal && templatesModal.classList.contains('open')) {
+                closeTemplatesPopup();
+            }
+        });
+    }
+
     function bindLivePreview() {
-        var watched = [templateInput, companyInput, jobInput, customParaInput];
+        var watched = [templateInput, companyInput, groupInput, customParaInput];
         for (var i = 0; i < watched.length; i++) {
             if (watched[i]) {
                 watched[i].addEventListener('input', renderLetter);
@@ -732,9 +990,12 @@
 
     tokens = loadTokens();
     persistTokens();
+    savedTemplates = loadSavedTemplates();
+    persistSavedTemplates();
     applyTheme(readTheme());
     renderTokenHub();
     bindLivePreview();
+    bindTemplateShortcuts();
     renderLetter();
 </script>
 </body>
