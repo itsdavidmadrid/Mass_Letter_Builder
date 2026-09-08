@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mass Letter Builder</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f5f7; padding: 30px; margin: 0; color: #333; }
+        .container { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .control-panel, .preview-panel { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h2 { margin-top: 0; color: #1a1a1a; border-bottom: 2px solid #eaeaea; padding-bottom: 10px; font-size: 1.4rem; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; color: #4a4a4a; }
+        input[type="text"], textarea, select { width: 100%; padding: 10px; border: 1px solid #cccccc; border-radius: 4px; box-sizing: border-box; font-size: 0.95rem; background: #fff; font-family: inherit; }
+        textarea { resize: vertical; }
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        button { flex: 1; padding: 12px; font-size: 1rem; font-weight: 600; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+        .btn-primary { background-color: #0066cc; color: white; }
+        .btn-primary:hover { background-color: #0052a3; }
+        .btn-secondary { background-color: #e4e6eb; color: #4b4b4b; }
+        .btn-secondary:hover { background-color: #d8dadf; }
+        .btn-danger { background-color: #d93025; color: white; }
+        .btn-danger:hover { background-color: #b3261e; }
+        .btn-compact { flex: 0 0 auto; padding: 10px 14px; font-size: 0.85rem; white-space: nowrap; }
+        .letter-output { white-space: pre-wrap; font-family: "Times New Roman", Times, serif; font-size: 11pt; line-height: 1.5; color: #000; padding: 20px; border: 1px solid #ddd; background: #fff; min-height: 500px; }
+
+        .token-hub { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+        .token-bubble { background-color: #e8f2ff; color: #0066cc; border: 1px dashed #b3d7ff; border-radius: 20px; padding: 6px 14px; font-family: monospace; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; user-select: none; }
+        .token-bubble:hover { background-color: #d0e5ff; transform: translateY(-1px); }
+        .token-bubble:active { transform: translateY(0); }
+        .token-bubble.copied { background-color: #e6f4ea; color: #137333; border-color: #c4eed0; }
+        .token-bubble.utility { background-color: #eef0f3; color: #5f6368; border: 1px dashed #c5c9d0; font-family: inherit; }
+        .token-bubble.utility:hover { background-color: #e4e6ea; transform: translateY(-1px); }
+        .token-bubble.utility.active { background-color: #d8dadf; border-style: solid; color: #3c4043; }
+
+        .hotswap-panel { display: none; margin: 0 0 12px; padding: 14px 16px; background: #f7f8fa; border: 1px solid #e2e4e8; border-radius: 6px; }
+        .hotswap-panel.open { display: block; }
+        .hotswap-panel h3 { margin: 0 0 12px; font-size: 0.95rem; color: #1a1a1a; }
+        .hotswap-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 12px; }
+        .hotswap-row:last-child { margin-bottom: 0; }
+        .hotswap-row .field { flex: 1; min-width: 0; }
+        .hotswap-row .field label { font-size: 0.8rem; }
+        .hotswap-hint { margin: 8px 0 0; font-size: 0.78rem; color: #6b6b6b; }
+        .hotswap-status { margin: 8px 0 0; font-size: 0.8rem; font-weight: 600; min-height: 1.1em; }
+        .hotswap-status.error { color: #d93025; }
+        .hotswap-status.success { color: #137333; }
+
+        .dynamic-vars { margin-bottom: 18px; }
+        .dynamic-vars[hidden] { display: none; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 20; }
+        .modal.open { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 6px; text-align: center; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        .modal-content p { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; }
+
+        @media (max-width: 860px) {
+            .container { grid-template-columns: 1fr; }
+            .hotswap-row { flex-direction: column; align-items: stretch; }
+            .btn-compact { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="control-panel">
+        <h2>Variable Configurations</h2>
+        <div class="form-group">
+            <label for="companyName">Target Company Name:</label>
+            <input type="text" id="companyName" name="companyName" value="" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label for="jobTitle">Target Person/group:</label>
+            <input type="text" id="jobTitle" name="jobTitle" value="" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label for="customParagraph">Custom Mass Paragraph (Placeholder Segment):</label>
+            <textarea id="customParagraph" name="customParagraph" rows="8"></textarea>
+        </div>
+        <div id="dynamicVars" class="dynamic-vars" hidden></div>
+
+        <h2>Master Template Architecture</h2>
+        <div class="form-group">
+            <div id="tokenHub" class="token-hub" aria-label="Token shortcuts"></div>
+            <label for="masterTemplate">Editable Structure:</label>
+            <div id="hotswapPanel" class="hotswap-panel" hidden>
+                <h3>Hotswap Text Manager</h3>
+                <form id="hotswapAddForm" onsubmit="return addHotswapToken(event)">
+                    <div class="hotswap-row">
+                        <div class="field">
+                            <label for="newTokenInput">Add a dynamic shortcut</label>
+                            <input type="text" id="newTokenInput" name="newTokenInput" value="" autocomplete="off" aria-describedby="hotswapHint">
+                        </div>
+                        <button type="submit" class="btn-primary btn-compact">Add Shortcut</button>
+                    </div>
+                </form>
+                <form id="hotswapDeleteForm" onsubmit="return deleteHotswapToken(event)">
+                    <div class="hotswap-row">
+                        <div class="field">
+                            <label for="deleteTokenSelect">Delete a shortcut</label>
+                            <select id="deleteTokenSelect" name="deleteTokenSelect"></select>
+                        </div>
+                        <button type="submit" class="btn-danger btn-compact">Delete Shortcut</button>
+                    </div>
+                </form>
+                <p id="hotswapHint" class="hotswap-hint">Type a word such as INDUSTRY. It is saved as {INDUSTRY} and copied from the bubble row.</p>
+                <p id="hotswapStatus" class="hotswap-status" role="status" aria-live="polite"></p>
+            </div>
+            <textarea id="masterTemplate" name="masterTemplate" rows="18"></textarea>
+        </div>
+    </div>
+
+    <div class="preview-panel">
+        <h2>Document Generation Preview</h2>
+        <div id="letterPreview" class="letter-output"></div>
+        <div class="btn-group">
+            <button type="button" class="btn-primary" onclick="exportDocument()">Export Copy (.txt)</button>
+        </div>
+    </div>
+</div>
+
+<div id="workflowModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="workflowModalTitle">
+    <div class="modal-content">
+        <p id="workflowModalTitle">Document Export Completed Successfully!</p>
+        <div class="btn-group">
+            <button type="button" class="btn-secondary" onclick="handleWorkflowChoice('continue')">Continue Editing</button>
+            <button type="button" class="btn-primary" onclick="handleWorkflowChoice('clear')">Clear Variable Inputs</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    var STORAGE_KEY = 'sdr_hotswap_tokens';
+    var BASELINE_TOKENS = ['{COMPANY}', '{TITLE}', '{PLACEHOLDER}'];
+    var CORE_FIELD_MAP = {
+        '{COMPANY}': 'companyName',
+        '{TITLE}': 'jobTitle',
+        '{PLACEHOLDER}': 'customParagraph'
+    };
+
+    var tokens = [];
+    var copyResetTimers = {};
+
+    var templateInput = document.getElementById('masterTemplate');
+    var companyInput = document.getElementById('companyName');
+    var jobInput = document.getElementById('jobTitle');
+    var customParaInput = document.getElementById('customParagraph');
+    var previewDiv = document.getElementById('letterPreview');
+    var modal = document.getElementById('workflowModal');
+    var tokenHub = document.getElementById('tokenHub');
+    var hotswapPanel = document.getElementById('hotswapPanel');
+    var newTokenInput = document.getElementById('newTokenInput');
+    var deleteTokenSelect = document.getElementById('deleteTokenSelect');
+    var hotswapStatus = document.getElementById('hotswapStatus');
+    var dynamicVars = document.getElementById('dynamicVars');
+
+    function safeText(value) {
+        return value == null ? '' : String(value);
+    }
+
+    function readStorage() {
+        try {
+            if (!window.localStorage) return null;
+            return localStorage.getItem(STORAGE_KEY);
+        } catch (err) {
+            return null;
+        }
+    }
+
+    function writeStorage(list) {
+        try {
+            if (!window.localStorage) return;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+        } catch (err) {
+            /* Storage can be blocked on locked-down local file profiles. */
+        }
+    }
+
+    function normalizeTokenList(rawList) {
+        if (!Array.isArray(rawList) || rawList.length === 0) {
+            return BASELINE_TOKENS.slice();
+        }
+
+        var cleaned = [];
+        for (var i = 0; i < rawList.length; i++) {
+            var normalized = normalizeTokenName(rawList[i]);
+            if (normalized && cleaned.indexOf(normalized) === -1) {
+                cleaned.push(normalized);
+            }
+        }
+
+        return cleaned.length ? cleaned : BASELINE_TOKENS.slice();
+    }
+
+    function loadTokens() {
+        var raw = readStorage();
+        if (raw == null || raw === '') {
+            return BASELINE_TOKENS.slice();
+        }
+
+        try {
+            return normalizeTokenList(JSON.parse(raw));
+        } catch (err) {
+            return BASELINE_TOKENS.slice();
+        }
+    }
+
+    function persistTokens() {
+        writeStorage(tokens);
+    }
+
+    function normalizeTokenName(input) {
+        var source = safeText(input).trim();
+        if (!source) return '';
+
+        source = source.replace(/^\{+/, '').replace(/\}+$/, '').trim();
+        source = source.toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, '');
+        source = source.replace(/_+/g, '_').replace(/^_+|_+$/g, '');
+
+        if (!source) return '';
+        return '{' + source + '}';
+    }
+
+    function setHotswapStatus(message, kind) {
+        if (!hotswapStatus) return;
+        hotswapStatus.textContent = message || '';
+        hotswapStatus.className = 'hotswap-status' + (kind ? ' ' + kind : '');
+    }
+
+    function copyTextToClipboard(text) {
+        var value = safeText(text);
+
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            return navigator.clipboard.writeText(value).catch(function() {
+                return copyTextFallback(value);
+            });
+        }
+
+        return copyTextFallback(value);
+    }
+
+    function copyTextFallback(text) {
+        return new Promise(function(resolve, reject) {
+            var area = document.createElement('textarea');
+            area.value = text;
+            area.setAttribute('readonly', '');
+            area.style.position = 'fixed';
+            area.style.top = '0';
+            area.style.left = '-9999px';
+            document.body.appendChild(area);
+            area.focus();
+            area.select();
+
+            var ok = false;
+            try {
+                ok = document.execCommand('copy');
+            } catch (err) {
+                ok = false;
+            }
+
+            document.body.removeChild(area);
+            if (ok) resolve();
+            else reject(new Error('Clipboard copy failed'));
+        });
+    }
+
+    function flashCopied(element, originalText) {
+        if (!element) return;
+        var key = originalText;
+        element.textContent = 'Copied!';
+        element.classList.add('copied');
+
+        if (copyResetTimers[key]) {
+            clearTimeout(copyResetTimers[key]);
+        }
+
+        copyResetTimers[key] = setTimeout(function() {
+            if (element && element.classList.contains('copied')) {
+                element.textContent = originalText;
+                element.classList.remove('copied');
+            }
+            delete copyResetTimers[key];
+        }, 1000);
+    }
+
+    function copyToken(element, tokenText) {
+        if (!element || !tokenText) return;
+        copyTextToClipboard(tokenText).then(function() {
+            flashCopied(element, tokenText);
+        }).catch(function() {
+            flashCopied(element, tokenText);
+        });
+    }
+
+    function handleTokenClick(event) {
+        var bubble = event && event.currentTarget ? event.currentTarget : null;
+        if (!bubble) return;
+        var token = bubble.getAttribute('data-token');
+        if (token) copyToken(bubble, token);
+    }
+
+    function toggleHotswapPanel() {
+        if (!hotswapPanel) return;
+        var isOpen = hotswapPanel.classList.contains('open');
+        if (isOpen) {
+            hotswapPanel.classList.remove('open');
+            hotswapPanel.setAttribute('hidden', '');
+        } else {
+            hotswapPanel.classList.add('open');
+            hotswapPanel.removeAttribute('hidden');
+            setHotswapStatus('', '');
+            if (newTokenInput) newTokenInput.focus();
+        }
+        renderTokenHub();
+    }
+
+    function renderDeleteOptions() {
+        if (!deleteTokenSelect) return;
+        var previous = deleteTokenSelect.value;
+        deleteTokenSelect.innerHTML = '';
+
+        if (!tokens.length) {
+            var emptyOption = document.createElement('option');
+            emptyOption.value = '';
+            emptyOption.textContent = 'No shortcuts available';
+            deleteTokenSelect.appendChild(emptyOption);
+            deleteTokenSelect.disabled = true;
+            return;
+        }
+
+        deleteTokenSelect.disabled = false;
+        for (var i = 0; i < tokens.length; i++) {
+            var option = document.createElement('option');
+            option.value = tokens[i];
+            option.textContent = tokens[i];
+            deleteTokenSelect.appendChild(option);
+        }
+
+        if (previous && tokens.indexOf(previous) !== -1) {
+            deleteTokenSelect.value = previous;
+        }
+    }
+
+    function renderTokenHub() {
+        if (!tokenHub) return;
+        tokenHub.innerHTML = '';
+
+        if (!Array.isArray(tokens)) {
+            tokens = BASELINE_TOKENS.slice();
+        }
+
+        var visibleTokens = tokens.slice();
+
+        for (var i = 0; i < visibleTokens.length; i++) {
+            (function(token) {
+                var bubble = document.createElement('div');
+                bubble.className = 'token-bubble';
+                bubble.setAttribute('data-token', token);
+                bubble.setAttribute('role', 'button');
+                bubble.setAttribute('tabindex', '0');
+                bubble.setAttribute('title', 'Copy ' + token);
+                bubble.textContent = token;
+                bubble.onclick = handleTokenClick;
+                bubble.onkeydown = function(event) {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        handleTokenClick(event);
+                    }
+                };
+                tokenHub.appendChild(bubble);
+            })(visibleTokens[i]);
+        }
+
+        var manager = document.createElement('div');
+        manager.className = 'token-bubble utility';
+        manager.id = 'hotswapManagerBtn';
+        manager.setAttribute('role', 'button');
+        manager.setAttribute('tabindex', '0');
+        manager.setAttribute('title', 'Open Hotswap text manager');
+        manager.textContent = '\u2699\uFE0F Hotswap text manager';
+        if (hotswapPanel && hotswapPanel.classList.contains('open')) {
+            manager.classList.add('active');
+        }
+        manager.onclick = function() { toggleHotswapPanel(); };
+        manager.onkeydown = function(event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleHotswapPanel();
+            }
+        };
+        tokenHub.appendChild(manager);
+
+        renderDeleteOptions();
+        renderDynamicFields();
+    }
+
+    function captureDynamicValues() {
+        var stored = {};
+        if (!dynamicVars) return stored;
+        var inputs = dynamicVars.querySelectorAll('input[data-token]');
+        for (var i = 0; i < inputs.length; i++) {
+            stored[inputs[i].getAttribute('data-token')] = inputs[i].value;
+        }
+        return stored;
+    }
+
+    function renderDynamicFields() {
+        if (!dynamicVars) return;
+
+        var previous = captureDynamicValues();
+        dynamicVars.innerHTML = '';
+
+        var customTokens = [];
+        for (var i = 0; i < tokens.length; i++) {
+            if (!CORE_FIELD_MAP[tokens[i]]) customTokens.push(tokens[i]);
+        }
+
+        if (!customTokens.length) {
+            dynamicVars.setAttribute('hidden', '');
+            return;
+        }
+
+        dynamicVars.removeAttribute('hidden');
+
+        for (var j = 0; j < customTokens.length; j++) {
+            (function(token) {
+                var key = token.replace(/[{}]/g, '');
+                var group = document.createElement('div');
+                group.className = 'form-group';
+
+                var fieldId = 'var_' + key;
+                var label = document.createElement('label');
+                label.setAttribute('for', fieldId);
+                label.textContent = key.charAt(0) + key.slice(1).toLowerCase().replace(/_/g, ' ') + ':';
+
+                var input = document.createElement('input');
+                input.type = 'text';
+                input.id = fieldId;
+                input.setAttribute('data-token', token);
+                input.value = previous[token] || '';
+                input.autocomplete = 'off';
+                input.addEventListener('input', renderLetter);
+
+                group.appendChild(label);
+                group.appendChild(input);
+                dynamicVars.appendChild(group);
+            })(customTokens[j]);
+        }
+    }
+
+    function getTokenValues() {
+        var values = {
+            '{COMPANY}': companyInput ? companyInput.value : '',
+            '{TITLE}': jobInput ? jobInput.value : '',
+            '{PLACEHOLDER}': customParaInput ? customParaInput.value : ''
+        };
+
+        if (dynamicVars) {
+            var inputs = dynamicVars.querySelectorAll('input[data-token]');
+            for (var i = 0; i < inputs.length; i++) {
+                values[inputs[i].getAttribute('data-token')] = inputs[i].value || '';
+            }
+        }
+
+        return values;
+    }
+
+    function renderLetter() {
+        if (!previewDiv || !templateInput) return '';
+
+        var text = templateInput.value || '';
+        var values = getTokenValues();
+        var keys = Object.keys(values).sort(function(a, b) {
+            return b.length - a.length;
+        });
+
+        for (var i = 0; i < keys.length; i++) {
+            var token = keys[i];
+            var replacement = values[token] == null ? '' : values[token];
+            text = text.split(token).join(replacement);
+        }
+
+        previewDiv.innerText = text;
+        return text;
+    }
+
+    function addHotswapToken(event) {
+        if (event && event.preventDefault) event.preventDefault();
+        if (!newTokenInput) return false;
+
+        var nextToken = normalizeTokenName(newTokenInput.value);
+        if (!nextToken) {
+            setHotswapStatus('Enter a shortcut name to add.', 'error');
+            return false;
+        }
+
+        if (tokens.indexOf(nextToken) !== -1) {
+            setHotswapStatus(nextToken + ' is already in the hub.', 'error');
+            return false;
+        }
+
+        tokens.push(nextToken);
+        persistTokens();
+        newTokenInput.value = '';
+        renderTokenHub();
+        renderLetter();
+        setHotswapStatus(nextToken + ' added.', 'success');
+        return false;
+    }
+
+    function deleteHotswapToken(event) {
+        if (event && event.preventDefault) event.preventDefault();
+        if (!deleteTokenSelect) return false;
+
+        var selected = deleteTokenSelect.value;
+        if (!selected) {
+            setHotswapStatus('Choose a shortcut to delete.', 'error');
+            return false;
+        }
+
+        var next = [];
+        for (var i = 0; i < tokens.length; i++) {
+            if (tokens[i] !== selected) next.push(tokens[i]);
+        }
+
+        tokens = next;
+        persistTokens();
+        renderTokenHub();
+        renderLetter();
+        setHotswapStatus(selected + ' removed.', 'success');
+        return false;
+    }
+
+    function exportDocument() {
+        var textContent = renderLetter();
+        var companyFilename = (companyInput && companyInput.value ? companyInput.value : '')
+            .replace(/[^a-z0-9]/gi, '_')
+            .toLowerCase() || 'custom_letter';
+
+        var blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = companyFilename + '.txt';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+
+        setTimeout(function() {
+            if (modal) {
+                modal.classList.add('open');
+                modal.style.display = 'flex';
+            }
+        }, 400);
+    }
+
+    function handleWorkflowChoice(choice) {
+        if (modal) {
+            modal.classList.remove('open');
+            modal.style.display = 'none';
+        }
+
+        if (choice === 'clear') {
+            if (companyInput) companyInput.value = '';
+            if (jobInput) jobInput.value = '';
+            if (customParaInput) customParaInput.value = '';
+            if (dynamicVars) {
+                var inputs = dynamicVars.querySelectorAll('input[data-token]');
+                for (var i = 0; i < inputs.length; i++) {
+                    inputs[i].value = '';
+                }
+            }
+            renderLetter();
+        }
+    }
+
+    function bindLivePreview() {
+        var watched = [templateInput, companyInput, jobInput, customParaInput];
+        for (var i = 0; i < watched.length; i++) {
+            if (watched[i]) {
+                watched[i].addEventListener('input', renderLetter);
+            }
+        }
+    }
+
+    tokens = loadTokens();
+    persistTokens();
+    renderTokenHub();
+    bindLivePreview();
+    renderLetter();
+</script>
+</body>
+</html>
