@@ -4,53 +4,156 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mass Letter Builder</title>
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('sdr_theme') === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                }
+            } catch (err) {}
+        })();
+    </script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f5f7; padding: 30px; margin: 0; color: #333; }
+        :root {
+            --bg: #f4f5f7;
+            --text: #333;
+            --panel: #fff;
+            --heading: #1a1a1a;
+            --heading-border: #eaeaea;
+            --label: #4a4a4a;
+            --input-bg: #fff;
+            --input-border: #cccccc;
+            --input-text: #333;
+            --letter-bg: #fff;
+            --letter-text: #000;
+            --letter-border: #ddd;
+            --shadow: 0 4px 12px rgba(0,0,0,0.05);
+            --bubble-bg: #e8f2ff;
+            --bubble-text: #0066cc;
+            --bubble-border: #b3d7ff;
+            --bubble-hover: #d0e5ff;
+            --copied-bg: #e6f4ea;
+            --copied-text: #137333;
+            --copied-border: #c4eed0;
+            --utility-bg: #eef0f3;
+            --utility-text: #5f6368;
+            --utility-border: #c5c9d0;
+            --utility-hover: #e4e6ea;
+            --utility-active-bg: #d8dadf;
+            --utility-active-text: #3c4043;
+            --hotswap-bg: #f7f8fa;
+            --hotswap-border: #e2e4e8;
+            --hint: #6b6b6b;
+            --modal-bg: #fff;
+            --modal-overlay: rgba(0,0,0,0.5);
+            --secondary-bg: #e4e6eb;
+            --secondary-text: #4b4b4b;
+            --secondary-hover: #d8dadf;
+            --toggle-bg: #fff;
+            --toggle-border: #d0d3d8;
+            --toggle-track: #c5c9d0;
+            --toggle-thumb: #fff;
+            --success: #137333;
+            --danger: #d93025;
+            color-scheme: light;
+        }
+
+        [data-theme="dark"] {
+            --bg: #121418;
+            --text: #e8eaed;
+            --panel: #1c1f26;
+            --heading: #f1f3f4;
+            --heading-border: #3a3f4b;
+            --label: #c4c7ce;
+            --input-bg: #252830;
+            --input-border: #3c414c;
+            --input-text: #e8eaed;
+            --letter-bg: #181b21;
+            --letter-text: #ececec;
+            --letter-border: #3c414c;
+            --shadow: 0 4px 16px rgba(0,0,0,0.35);
+            --bubble-bg: #1a3348;
+            --bubble-text: #8ab4f8;
+            --bubble-border: #3d6a99;
+            --bubble-hover: #234560;
+            --copied-bg: #1e3a2a;
+            --copied-text: #81c995;
+            --copied-border: #3d7a54;
+            --utility-bg: #2a2e36;
+            --utility-text: #c4c7ce;
+            --utility-border: #4a4f5a;
+            --utility-hover: #343945;
+            --utility-active-bg: #3c414c;
+            --utility-active-text: #f1f3f4;
+            --hotswap-bg: #181b21;
+            --hotswap-border: #3c414c;
+            --hint: #9aa0a6;
+            --modal-bg: #1c1f26;
+            --modal-overlay: rgba(0,0,0,0.65);
+            --secondary-bg: #3c414c;
+            --secondary-text: #e8eaed;
+            --secondary-hover: #4a5060;
+            --toggle-bg: #1c1f26;
+            --toggle-border: #3c414c;
+            --toggle-track: #0066cc;
+            --toggle-thumb: #f1f3f4;
+            --success: #81c995;
+            --danger: #f28b82;
+            color-scheme: dark;
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg); padding: 30px; margin: 0; color: var(--text); }
+        .theme-bar { max-width: 1100px; margin: 0 auto 16px; display: flex; justify-content: flex-start; }
+        .theme-toggle { display: inline-flex; align-items: center; gap: 10px; flex: 0 0 auto; width: auto; padding: 8px 12px; background: var(--toggle-bg); color: var(--text); border: 1px solid var(--toggle-border); border-radius: 999px; box-shadow: var(--shadow); font-size: 0.85rem; font-weight: 600; }
+        .theme-toggle:hover { background: var(--panel); }
+        .theme-toggle-track { position: relative; width: 36px; height: 20px; background: var(--toggle-track); border-radius: 999px; flex: 0 0 auto; }
+        .theme-toggle-thumb { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: var(--toggle-thumb); border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.25); transition: transform 0.18s ease; }
+        .theme-toggle[aria-pressed="true"] .theme-toggle-thumb { transform: translateX(16px); }
         .container { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-        .control-panel, .preview-panel { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        h2 { margin-top: 0; color: #1a1a1a; border-bottom: 2px solid #eaeaea; padding-bottom: 10px; font-size: 1.4rem; }
+        .control-panel, .preview-panel { background: var(--panel); padding: 25px; border-radius: 8px; box-shadow: var(--shadow); }
+        h2 { margin-top: 0; color: var(--heading); border-bottom: 2px solid var(--heading-border); padding-bottom: 10px; font-size: 1.4rem; }
         .form-group { margin-bottom: 18px; }
-        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; color: #4a4a4a; }
-        input[type="text"], textarea, select { width: 100%; padding: 10px; border: 1px solid #cccccc; border-radius: 4px; box-sizing: border-box; font-size: 0.95rem; background: #fff; font-family: inherit; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; color: var(--label); }
+        input[type="text"], textarea, select { width: 100%; padding: 10px; border: 1px solid var(--input-border); border-radius: 4px; box-sizing: border-box; font-size: 0.95rem; background: var(--input-bg); color: var(--input-text); font-family: inherit; }
         textarea { resize: vertical; }
         .btn-group { display: flex; gap: 10px; margin-top: 20px; }
         button { flex: 1; padding: 12px; font-size: 1rem; font-weight: 600; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
         .btn-primary { background-color: #0066cc; color: white; }
         .btn-primary:hover { background-color: #0052a3; }
-        .btn-secondary { background-color: #e4e6eb; color: #4b4b4b; }
-        .btn-secondary:hover { background-color: #d8dadf; }
+        .btn-secondary { background-color: var(--secondary-bg); color: var(--secondary-text); }
+        .btn-secondary:hover { background-color: var(--secondary-hover); }
         .btn-danger { background-color: #d93025; color: white; }
         .btn-danger:hover { background-color: #b3261e; }
         .btn-compact { flex: 0 0 auto; padding: 10px 14px; font-size: 0.85rem; white-space: nowrap; }
-        .letter-output { white-space: pre-wrap; font-family: "Times New Roman", Times, serif; font-size: 11pt; line-height: 1.5; color: #000; padding: 20px; border: 1px solid #ddd; background: #fff; min-height: 500px; }
+        .letter-output { white-space: pre-wrap; font-family: "Times New Roman", Times, serif; font-size: 11pt; line-height: 1.5; color: var(--letter-text); padding: 20px; border: 1px solid var(--letter-border); background: var(--letter-bg); min-height: 500px; }
 
         .token-hub { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
-        .token-bubble { background-color: #e8f2ff; color: #0066cc; border: 1px dashed #b3d7ff; border-radius: 20px; padding: 6px 14px; font-family: monospace; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; user-select: none; }
-        .token-bubble:hover { background-color: #d0e5ff; transform: translateY(-1px); }
+        .token-bubble { background-color: var(--bubble-bg); color: var(--bubble-text); border: 1px dashed var(--bubble-border); border-radius: 20px; padding: 6px 14px; font-family: monospace; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; user-select: none; }
+        .token-bubble:hover { background-color: var(--bubble-hover); transform: translateY(-1px); }
         .token-bubble:active { transform: translateY(0); }
-        .token-bubble.copied { background-color: #e6f4ea; color: #137333; border-color: #c4eed0; }
-        .token-bubble.utility { background-color: #eef0f3; color: #5f6368; border: 1px dashed #c5c9d0; font-family: inherit; }
-        .token-bubble.utility:hover { background-color: #e4e6ea; transform: translateY(-1px); }
-        .token-bubble.utility.active { background-color: #d8dadf; border-style: solid; color: #3c4043; }
+        .token-bubble.copied { background-color: var(--copied-bg); color: var(--copied-text); border-color: var(--copied-border); }
+        .token-bubble.utility { background-color: var(--utility-bg); color: var(--utility-text); border: 1px dashed var(--utility-border); font-family: inherit; }
+        .token-bubble.utility:hover { background-color: var(--utility-hover); transform: translateY(-1px); }
+        .token-bubble.utility.active { background-color: var(--utility-active-bg); border-style: solid; color: var(--utility-active-text); }
 
-        .hotswap-panel { display: none; margin: 0 0 12px; padding: 14px 16px; background: #f7f8fa; border: 1px solid #e2e4e8; border-radius: 6px; }
+        .hotswap-panel { display: none; margin: 0 0 12px; padding: 14px 16px; background: var(--hotswap-bg); border: 1px solid var(--hotswap-border); border-radius: 6px; }
         .hotswap-panel.open { display: block; }
-        .hotswap-panel h3 { margin: 0 0 12px; font-size: 0.95rem; color: #1a1a1a; }
+        .hotswap-panel h3 { margin: 0 0 12px; font-size: 0.95rem; color: var(--heading); }
         .hotswap-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 12px; }
         .hotswap-row:last-child { margin-bottom: 0; }
         .hotswap-row .field { flex: 1; min-width: 0; }
         .hotswap-row .field label { font-size: 0.8rem; }
-        .hotswap-hint { margin: 8px 0 0; font-size: 0.78rem; color: #6b6b6b; }
+        .hotswap-hint { margin: 8px 0 0; font-size: 0.78rem; color: var(--hint); }
         .hotswap-status { margin: 8px 0 0; font-size: 0.8rem; font-weight: 600; min-height: 1.1em; }
-        .hotswap-status.error { color: #d93025; }
-        .hotswap-status.success { color: #137333; }
+        .hotswap-status.error { color: var(--danger); }
+        .hotswap-status.success { color: var(--success); }
 
         .dynamic-vars { margin-bottom: 18px; }
         .dynamic-vars[hidden] { display: none; }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 20; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-overlay); align-items: center; justify-content: center; z-index: 20; }
         .modal.open { display: flex; }
-        .modal-content { background: white; padding: 30px; border-radius: 6px; text-align: center; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        .modal-content { background: var(--modal-bg); color: var(--text); padding: 30px; border-radius: 6px; text-align: center; max-width: 400px; box-shadow: var(--shadow); }
         .modal-content p { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; }
 
         @media (max-width: 860px) {
@@ -61,6 +164,13 @@
     </style>
 </head>
 <body>
+
+<div class="theme-bar">
+    <button type="button" id="themeToggle" class="theme-toggle" onclick="toggleTheme()" aria-pressed="false" aria-label="Toggle dark mode">
+        <span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-thumb"></span></span>
+        <span id="themeToggleLabel">Dark mode</span>
+    </button>
+</div>
 
 <div class="container">
     <div class="control-panel">
@@ -131,6 +241,7 @@
 
 <script>
     var STORAGE_KEY = 'sdr_hotswap_tokens';
+    var THEME_KEY = 'sdr_theme';
     var BASELINE_TOKENS = ['{COMPANY}', '{TITLE}', '{PLACEHOLDER}'];
     var CORE_FIELD_MAP = {
         '{COMPANY}': 'companyName',
@@ -153,6 +264,8 @@
     var deleteTokenSelect = document.getElementById('deleteTokenSelect');
     var hotswapStatus = document.getElementById('hotswapStatus');
     var dynamicVars = document.getElementById('dynamicVars');
+    var themeToggle = document.getElementById('themeToggle');
+    var themeToggleLabel = document.getElementById('themeToggleLabel');
 
     function safeText(value) {
         return value == null ? '' : String(value);
@@ -207,6 +320,39 @@
 
     function persistTokens() {
         writeStorage(tokens);
+    }
+
+    function readTheme() {
+        try {
+            if (!window.localStorage) return 'light';
+            return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light';
+        } catch (err) {
+            return 'light';
+        }
+    }
+
+    function applyTheme(theme) {
+        var isDark = theme === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+
+        if (themeToggle) {
+            themeToggle.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+            themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+        if (themeToggleLabel) {
+            themeToggleLabel.textContent = 'Dark mode';
+        }
+
+        try {
+            if (window.localStorage) {
+                localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+            }
+        } catch (err) {}
+    }
+
+    function toggleTheme() {
+        var current = document.documentElement.getAttribute('data-theme');
+        applyTheme(current === 'dark' ? 'light' : 'dark');
     }
 
     function normalizeTokenName(input) {
@@ -586,6 +732,7 @@
 
     tokens = loadTokens();
     persistTokens();
+    applyTheme(readTheme());
     renderTokenHub();
     bindLivePreview();
     renderLetter();
